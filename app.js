@@ -1,4 +1,7 @@
 const STORAGE_KEY = 'numberAdditionRankingsV1';
+const ACCOUNT_TOKEN_KEY = 'numberAdditionAccountTokenV1';
+
+let currentAccount = null;
 
 const DIFFICULTIES = {
   easy: 5,
@@ -30,6 +33,13 @@ const gameScreen = document.querySelector('#game-screen');
 const resultScreen = document.querySelector('#result-screen');
 
 const gameSetup = document.querySelector('#game-setup');
+
+const accountStatus = document.querySelector('#account-status');
+const registerForm = document.querySelector('#register-form');
+const registerNicknameInput = document.querySelector('#register-nickname');
+const accountFeedback = document.querySelector('#account-feedback');
+const withdrawButton = document.querySelector('#withdraw-button');
+
 const durationGroup = document.querySelector('#duration-group');
 const difficultyGroup = document.querySelector('#difficulty-group');
 
@@ -49,7 +59,6 @@ const answerInput = document.querySelector('#answer-input');
 const rankingList = document.querySelector('#ranking-list');
 
 const recordForm = document.querySelector('#record-form');
-const nicknameInput = document.querySelector('#nickname');
 const saveFeedback = document.querySelector('#save-feedback');
 
 const resultCorrect = document.querySelector('#result-correct');
@@ -524,15 +533,152 @@ function displayResults() {
   resultScore.textContent = `${state.score}점`;
   resultAverage.textContent = `${average.toFixed(2)}초`;
 
-  nicknameInput.value = 'Player';
-  nicknameInput.disabled = false;
+  const isMember = Boolean(currentAccount);
+
+  recordForm.hidden = state.mode !== 'timed' || !isMember;
 
   document.querySelector('#save-record-button').disabled = false;
 
-  saveFeedback.textContent = '';
+  saveFeedback.textContent =
+    state.mode === 'timed' && !isMember
+      ? '게스트 모드에서는 기록을 저장할 수 없습니다.'
+      : '';
+
   resultRankingArea.hidden = true;
 
   showScreen('result');
+}
+
+
+
+
+// 회원 관리
+
+function updateAccountUI() {
+  if (currentAccount) {
+    accountStatus.textContent = `현재 회원: ${currentAccount.nickname}`;
+    registerForm.hidden = true;
+    withdrawButton.hidden = false;
+  } else {
+    accountStatus.textContent =
+      '게스트 모드: 기록 조회만 가능합니다.';
+    registerForm.hidden = false;
+    withdrawButton.hidden = true;
+  }
+}
+
+async function refreshAccount() {
+  const token = localStorage.getItem(ACCOUNT_TOKEN_KEY);
+
+  if (!token) {
+    currentAccount = null;
+    updateAccountUI();
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem(ACCOUNT_TOKEN_KEY);
+        currentAccount = null;
+      }
+
+      throw new Error('회원 정보를 확인하지 못했습니다.');
+    }
+
+    currentAccount = await response.json();
+  } catch (error) {
+    if (localStorage.getItem(ACCOUNT_TOKEN_KEY) === token) {
+      accountFeedback.textContent = error.message;
+    }
+  }
+
+  updateAccountUI();
+}
+
+async function registerAccount(event) {
+  event.preventDefault();
+
+  const nickname = registerNicknameInput.value.trim();
+
+  if (!nickname) {
+    accountFeedback.textContent = '닉네임을 입력하세요.';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ nickname }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || '회원가입에 실패했습니다.');
+    }
+
+    localStorage.setItem(ACCOUNT_TOKEN_KEY, data.token);
+
+    currentAccount = {
+      id: data.id,
+      nickname: data.nickname,
+    };
+
+    registerForm.reset();
+
+    accountFeedback.textContent = '회원가입이 완료되었습니다.';
+
+    updateAccountUI();
+  } catch (error) {
+    accountFeedback.textContent = error.message;
+  }
+}
+
+async function withdrawAccount() {
+  if (!currentAccount) return;
+
+  const confirmed = window.confirm(
+    `${currentAccount.nickname} 회원을 탈퇴하시겠습니까?\n기존 게임 기록은 유지됩니다.`
+  );
+
+  if (!confirmed) return;
+
+  const token = localStorage.getItem(ACCOUNT_TOKEN_KEY);
+
+  try {
+    const response = await fetch('/api/account', {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || '회원탈퇴에 실패했습니다.');
+    }
+
+    localStorage.removeItem(ACCOUNT_TOKEN_KEY);
+
+    currentAccount = null;
+
+    accountFeedback.textContent = '회원탈퇴가 완료되었습니다.';
+
+    updateAccountUI();
+  } catch (error) {
+    accountFeedback.textContent = error.message;
+  }
 }
 
 
@@ -596,29 +742,41 @@ function renderRanking(target, records, currentRecordId = null) {
   });
 }
 
-function updateRanking() {
+async function updateRanking() {
   const duration = Number(durationSelect.value);
   const difficulty = difficultySelect.value;
 
-  const key = getRankingKey(duration, difficulty);
-  const rankings = getRankings();
+  try {
+    const response = await fetch(
+      `/api/records?duration=${duration}&difficulty=${difficulty}`
+    );
 
-  const records = sortRankings([
-    ...(rankings[key] || []),
-  ]);
+    if (!response.ok) {
+      throw new Error('기록 조회 실패');
+    }
 
-  renderRanking(rankingList, records);
+    const records = await response.json();
+
+    renderRanking(rankingList, records);
+  } catch (error) {
+    renderRanking(rankingList, []);
+    rankingList.querySelector('li').textContent =
+      '서버에서 기록을 불러오지 못했습니다.';
+  }
 }
 
 
 // 닉네임 입력 및 기록 저장
 
-function saveRecord(event) {
+async function saveRecord(event) {
   event.preventDefault();
 
-  if (state.recordSaved || state.mode !== 'timed') return;
+  if (state.recordSaved || state.mode !== 'timed' || !currentAccount) {
+    return;
+  }
 
-  const nickname = nicknameInput.value.trim() || 'Player';
+  const token = localStorage.getItem(ACCOUNT_TOKEN_KEY);
+  const saveButton = document.querySelector('#save-record-button');
 
   const total = state.correct + state.wrong;
 
@@ -630,9 +788,7 @@ function saveRecord(event) {
     ? state.totalResponseTime / state.attempts
     : 0;
 
-  const record = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    nickname,
+  const payload = {
     duration: state.duration,
     difficulty: state.difficulty,
     correct: state.correct,
@@ -640,57 +796,75 @@ function saveRecord(event) {
     accuracy,
     score: state.score,
     averageResponseTime: average,
-    createdAt: Date.now(),
   };
 
-  const rankings = getRankings();
-  const key = getRankingKey(state.duration, state.difficulty);
-
-  const records = rankings[key] || [];
-
-  records.push(record);
-
-  const sortedRecords = sortRankings(records).slice(0, 10);
-
-  rankings[key] = sortedRecords;
+  saveButton.disabled = true;
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rankings));
+    const response = await fetch('/api/records', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || '기록 저장에 실패했습니다.');
+    }
 
     state.recordSaved = true;
-    state.currentRecordId = record.id;
+    state.currentRecordId = data.id;
 
-    nicknameInput.disabled = true;
-    document.querySelector('#save-record-button').disabled = true;
+    saveFeedback.textContent = '서버에 기록이 저장되었습니다.';
 
-    const rank = sortedRecords.findIndex(
-      (item) => item.id === record.id
+    resultRankingTitle.textContent =
+      `${state.duration}초 / ${DIFFICULTY_NAMES[state.difficulty]} 순위표`;
+
+    const rankingResponse = await fetch(
+      `/api/records?duration=${state.duration}&difficulty=${state.difficulty}`
+    );
+
+    if (!rankingResponse.ok) {
+      throw new Error('순위표 조회에 실패했습니다.');
+    }
+
+    const records = await rankingResponse.json();
+
+    const rank = records.findIndex(
+      (item) => item.id === data.id
     );
 
     saveFeedback.textContent = rank >= 0
       ? `${rank + 1}위로 기록이 저장되었습니다.`
       : '기록이 저장되었습니다. TOP 10에는 포함되지 않았습니다.';
 
-    resultRankingTitle.textContent =
-      `${state.duration}초 / ${DIFFICULTY_NAMES[state.difficulty]} 순위표`;
-
     renderRanking(
       resultRankingList,
-      sortedRecords,
-      record.id
+      records,
+      data.id
     );
 
     resultRankingArea.hidden = false;
 
-    updateRanking();
+    await updateRanking();
   } catch (error) {
-    saveFeedback.textContent =
-      '기록을 저장하지 못했습니다. 브라우저 저장 기능을 확인하세요.';
+    saveFeedback.textContent = error.message;
+
+    if (!state.recordSaved) {
+      saveButton.disabled = false;
+    }
   }
 }
 
 
 // 이벤트 등록
+
+registerForm.addEventListener('submit', registerAccount);
+withdrawButton.addEventListener('click', withdrawAccount);
 
 gameSetup.addEventListener('submit', startGame);
 
@@ -726,5 +900,7 @@ document.querySelector('#return-button').addEventListener('click', () => {
 
 // 최초 실행
 
+updateAccountUI();
+refreshAccount();
 updateSetupVisibility();
 updateRanking();

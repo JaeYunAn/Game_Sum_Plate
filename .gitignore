@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.py[cod]
+number_addition.db
+number_addition.db-shm
+number_addition.db-wal
+.env

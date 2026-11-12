@@ -17,6 +17,25 @@
     <section id="setup-screen">
       <h2>게임 설정</h2>
 
+      <section id="account-area">
+        <p id="account-status" aria-live="polite"></p>
+
+        <form id="register-form">
+          <label for="register-nickname">회원가입 닉네임</label>
+          <input
+            type="text"
+            id="register-nickname"
+            maxlength="16"
+            autocomplete="off"
+            required
+          >
+          <button type="submit">회원가입</button>
+        </form>
+
+        <button type="button" id="withdraw-button" hidden>회원탈퇴</button>
+        <p id="account-feedback" aria-live="polite"></p>
+      </section>
+
       <form id="game-setup">
         <fieldset>
           <legend>게임 모드</legend>
@@ -129,16 +148,7 @@
 
       <form id="record-form">
         <h3>기록 저장</h3>
-
-        <label for="nickname">닉네임</label>
-        <input
-          type="text"
-          id="nickname"
-          value="Player"
-          maxlength="16"
-          autocomplete="off"
-        >
-
+        <p>회원 닉네임으로 기록이 저장됩니다.</p>
         <button type="submit" id="save-record-button">기록 저장</button>
       </form>
 

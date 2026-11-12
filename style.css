@@ -601,3 +601,57 @@ main {
     padding: 12px;
   }
 }
+
+
+/* 회원 관리 스타일 */
+#account-area {
+  margin-bottom: 25px;
+  padding: 18px;
+  border: 1px solid #d5e3f1;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+}
+
+#account-status {
+  margin-bottom: 15px;
+  font-weight: 700;
+  color: #315b82;
+}
+
+#register-form {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+#register-form label {
+  font-weight: 700;
+}
+
+#register-nickname {
+  width: 160px;
+  padding: 12px;
+  border: 1px solid #ccd5df;
+  border-radius: 8px;
+}
+
+#account-feedback {
+  margin-top: 12px;
+  font-weight: 700;
+  color: #35a675;
+}
+
+#withdraw-button {
+  padding: 10px 16px;
+  background: #a94442;
+  color: white;
+}
+
+#record-form > p {
+  width: 100%;
+  margin: 0;
+  color: #718096;
+}
