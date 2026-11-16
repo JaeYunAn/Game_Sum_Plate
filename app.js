@@ -4,17 +4,11 @@ const ACCOUNT_TOKEN_KEY = 'numberAdditionAccountTokenV1';
 let currentAccount = null;
 
 const DIFFICULTIES = {
-  easy: 5,
-  normal: 3,
-  hard: 2,
-  extreme: 1.75,
+  score: 5,
 };
 
 const DIFFICULTY_NAMES = {
-  easy: '쉬움',
-  normal: '보통',
-  hard: '어려움',
-  extreme: '극한',
+  score: '점수모드',
 };
 
 // 일반 자가용 번호판에 사용되는 한글 32개
@@ -80,7 +74,7 @@ const state = {
   running: false,
   mode: 'timed',
   duration: 60,
-  difficulty: 'normal',
+  difficulty: 'score',
   questionLimit: 3,
   gameEndsAt: 0,
 
@@ -878,7 +872,7 @@ async function updateRanking() {
 
   try {
     const response = await fetch(
-      `/api/records?duration=${duration}&difficulty=${difficulty}`
+      `/api/records?duration=${duration}&gameMode=${difficulty}`
     );
 
     if (!response.ok) {
@@ -920,7 +914,7 @@ async function saveRecord(event) {
 
   const payload = {
     duration: state.duration,
-    difficulty: state.difficulty,
+    gameMode: state.difficulty,
     correct: state.correct,
     wrong: state.wrong,
     accuracy,
@@ -955,7 +949,7 @@ async function saveRecord(event) {
       `${state.duration}초 / ${DIFFICULTY_NAMES[state.difficulty]} 순위표`;
 
     const rankingResponse = await fetch(
-      `/api/records?duration=${state.duration}&difficulty=${state.difficulty}`
+      `/api/records?duration=${state.duration}&gameMode=${state.difficulty}`
     );
 
     if (!rankingResponse.ok) {

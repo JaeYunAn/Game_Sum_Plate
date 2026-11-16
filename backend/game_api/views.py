@@ -142,16 +142,16 @@ class RecordsView(APIView):
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
-        difficulty = request.query_params.get('difficulty', 'normal')
-        if difficulty not in ('easy', 'normal', 'hard', 'extreme'):
+        game_mode = request.query_params.get('gameMode', 'score')
+        if game_mode not in ('score', 'survival'):
             return Response(
-                {'detail': '올바른 난이도를 선택하세요.'},
+                {'detail': '올바른 게임모드를 선택하세요.'},
                 status=status.HTTP_422_UNPROCESSABLE_ENTITY,
             )
 
         rows = Record.objects.filter(
             duration=duration,
-            difficulty=difficulty,
+            game_mode=game_mode,
         ).order_by('-score', '-accuracy', 'average_response_time', 'created_at')[:10]
 
         return Response(RecordSerializer(rows, many=True).data, status=status.HTTP_200_OK)
@@ -166,7 +166,7 @@ class RecordsView(APIView):
             member=request.user,
             nickname=request.user.nickname,
             duration=data['duration'],
-            difficulty=data['difficulty'],
+            game_mode=data['gameMode'],
             correct=data['correct'],
             wrong=data['wrong'],
             accuracy=data['accuracy'],

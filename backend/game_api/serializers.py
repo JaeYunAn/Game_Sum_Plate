@@ -44,7 +44,7 @@ class StrictFloatField(serializers.FloatField):
 
 class RecordCreateSerializer(serializers.Serializer):
     duration = StrictIntField()
-    difficulty = serializers.ChoiceField(choices=('easy', 'normal', 'hard', 'extreme'))
+    gameMode = serializers.ChoiceField(choices=('score', 'survival'))
     correct = StrictIntField(min_value=0)
     wrong = StrictIntField(min_value=0)
     accuracy = StrictFloatField(min_value=0.0, max_value=100.0)
@@ -60,6 +60,7 @@ class RecordCreateSerializer(serializers.Serializer):
 class RecordSerializer(serializers.ModelSerializer):
     averageResponseTime = serializers.FloatField(source='average_response_time')
     createdAt = serializers.IntegerField(source='created_at')
+    gameMode = serializers.CharField(source='game_mode')
 
     class Meta:
         model = Record
@@ -67,7 +68,7 @@ class RecordSerializer(serializers.ModelSerializer):
             'id',
             'nickname',
             'duration',
-            'difficulty',
+            'gameMode',
             'correct',
             'wrong',
             'accuracy',

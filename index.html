@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>번호판 더하기</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <script src="app.js?v=3" defer></script>
 </head>
 <body>
   <header>
@@ -75,14 +75,12 @@
         </fieldset>
 
         <fieldset id="difficulty-group">
-          <legend>난이도</legend>
+          <legend>게임모드</legend>
 
-          <label for="difficulty">난이도 선택</label>
+          <label for="difficulty">게임모드 선택</label>
           <select id="difficulty" name="difficulty">
-            <option value="easy">쉬움 (5초)</option>
-            <option value="normal" selected>보통 (3초)</option>
-            <option value="hard">어려움 (2초)</option>
-            <option value="extreme">극한 (1.75초)</option>
+            <option value="score" selected>점수모드</option>
+            <option value="survival" disabled>생존모드 (준비 중)</option>
           </select>
         </fieldset>
 

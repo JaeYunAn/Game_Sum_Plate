@@ -31,7 +31,7 @@ class Record(models.Model):
     )
     nickname = models.TextField()
     duration = models.IntegerField()
-    difficulty = models.TextField()
+    game_mode = models.TextField()
     correct = models.IntegerField()
     wrong = models.IntegerField()
     accuracy = models.FloatField()

@@ -280,7 +280,7 @@ button:focus-visible {
   }
 }
 
-/* 연습 모드에서는 난이도 선택 영역 숨기기 */
+/* 연습 모드에서는 게임모드 선택 영역 숨기기 */
 #game-setup:has(input[name="game-mode"][value="practice"]:checked) #difficulty-group {
   display: none;
 }
