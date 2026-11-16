@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>번호판 더하기</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>번호판 더하기</h1>
+    <p>자동차 번호판의 네 자리 숫자를 더해보세요.</p>
+  </header>
+
+  <main>
+    <section id="setup-screen">
+      <h2>게임 설정</h2>
+
+      <section id="account-area">
+        <p id="account-status" aria-live="polite"></p>
+
+        <form id="register-form">
+          <label for="register-nickname">회원가입 닉네임</label>
+          <input
+            type="text"
+            id="register-nickname"
+            maxlength="16"
+            autocomplete="off"
+            required
+          >
+          <button type="submit">회원가입</button>
+        </form>
+
+        <form id="login-form">
+          <label for="login-nickname">로그인 닉네임</label>
+          <input
+            type="text"
+            id="login-nickname"
+            maxlength="16"
+            autocomplete="off"
+            required
+          >
+          <button type="submit">로그인</button>
+        </form>
+
+        <button type="button" id="logout-button" hidden>로그아웃</button>
+        <button type="button" id="withdraw-button" hidden>회원탈퇴</button>
+        <p id="account-feedback" aria-live="polite"></p>
+      </section>
+
+      <form id="game-setup">
+        <fieldset>
+          <legend>게임 모드</legend>
+
+          <label>
+            <input type="radio" name="game-mode" value="timed" checked>
+            시간 제한 모드
+          </label>
+
+          <label>
+            <input type="radio" name="game-mode" value="practice">
+            연습 모드
+          </label>
+        </fieldset>
+
+        <fieldset id="duration-group">
+          <legend>게임 시간</legend>
+
+          <label for="duration">플레이 시간</label>
+          <select id="duration" name="duration">
+            <option value="30">30초</option>
+            <option value="60" selected>1분</option>
+          </select>
+        </fieldset>
+
+        <fieldset id="difficulty-group">
+          <legend>난이도</legend>
+
+          <label for="difficulty">난이도 선택</label>
+          <select id="difficulty" name="difficulty">
+            <option value="easy">쉬움 (5초)</option>
+            <option value="normal" selected>보통 (3초)</option>
+            <option value="hard">어려움 (2초)</option>
+            <option value="extreme">극한 (1.75초)</option>
+          </select>
+        </fieldset>
+
+        <button type="submit" id="start-button">시작하기</button>
+      </form>
+
+      <section id="ranking-area">
+        <h2>명예의 전당</h2>
+        <p>시간 제한 모드 TOP 10</p>
+
+        <ol id="ranking-list"></ol>
+      </section>
+    </section>
+
+    <section id="game-screen" hidden>
+      <h2>게임 진행 중</h2>
+
+      <section id="game-status">
+        <div id="game-clock-area">
+          <h3>남은 게임 시간</h3>
+          <time id="game-clock">01:00</time>
+        </div>
+
+        <div id="timer-area">
+          <h3 id="timer-label">문제 제한 시간</h3>
+          <time id="timer">3.00초</time>
+        </div>
+
+        <div id="score-area" hidden>
+          <h3>현재 점수</h3>
+          <strong id="current-score">0점</strong>
+        </div>
+      </section>
+
+      <section id="question-area">
+        <h3>번호판 뒤 네 자리의 합은?</h3>
+
+        <div id="license-plate" role="img"
+          aria-label="자동차 번호판. 뒤의 네 자리 숫자가 합산 대상입니다.">
+          <span id="plate-prefix">25</span>
+          <span id="plate-hangul">거</span>
+          <span id="plate-suffix">
+            <span id="suffix-digit-1">2</span><span id="suffix-digit-2">5</span><span id="suffix-digit-3">6</span><span id="suffix-digit-4">6</span>
+          </span>
+        </div>
+      </section>
+
+      <section id="answer-area">
+        <h3>정답을 입력하세요.</h3>
+
+        <input
+          type="text"
+          id="answer-input"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="2"
+          autocomplete="off"
+        >
+      </section>
+
+      <p id="feedback" aria-live="polite"></p>
+
+      <button type="button" id="end-button">게임 종료</button>
+    </section>
+
+    <section id="result-screen" hidden>
+      <h2>게임 결과</h2>
+
+      <div id="result-stats">
+        <p>정답 수: <strong id="result-correct">0</strong></p>
+        <p>오답 수: <strong id="result-wrong">0</strong></p>
+        <p>정답률: <strong id="result-accuracy">0%</strong></p>
+        <p>최종 점수: <strong id="result-score">0점</strong></p>
+        <p>평균 응답 시간: <strong id="result-average">0.00초</strong></p>
+      </div>
+
+      <form id="record-form">
+        <h3>기록 저장</h3>
+        <p>회원 닉네임으로 기록이 저장됩니다.</p>
+        <button type="submit" id="save-record-button">기록 저장</button>
+      </form>
+
+      <p id="save-feedback" aria-live="polite"></p>
+
+      <section id="result-ranking-area" hidden>
+        <h3 id="result-ranking-title">순위표</h3>
+        <ol id="result-ranking-list"></ol>
+      </section>
+
+      <button type="button" id="return-button">처음으로</button>
+    </section>
+  </main>
+</body>
+</html>

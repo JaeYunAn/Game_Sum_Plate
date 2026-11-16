@@ -57,6 +57,8 @@ const scoreArea = document.querySelector('#score-area');
 const currentScore = document.querySelector('#current-score');
 
 const feedback = document.querySelector('#feedback');
+const countdownOverlay = document.querySelector('#countdown-overlay');
+const countdownNumber = document.querySelector('#countdown-number');
 const answerInput = document.querySelector('#answer-input');
 
 const rankingList = document.querySelector('#ranking-list');
@@ -100,6 +102,7 @@ let gameInterval = null;
 let questionInterval = null;
 let questionTimeout = null;
 let feedbackTimeout = null;
+let countdownInterval = null;
 
 
 // 공통 유틸리티
@@ -138,9 +141,13 @@ function clearAllTimers() {
   clearQuestionTimers();
   clearInterval(gameInterval);
   clearTimeout(feedbackTimeout);
+  clearInterval(countdownInterval);
 
   gameInterval = null;
   feedbackTimeout = null;
+  countdownInterval = null;
+
+  countdownOverlay.hidden = true;
 }
 
 function showScreen(screen) {
@@ -252,17 +259,60 @@ function startGame(event) {
     gameClockArea.hidden = false;
     timerLabel.textContent = '문제 제한 시간';
 
-    state.gameEndsAt = performance.now() + state.duration * 1000;
-
     gameClock.textContent = formatClock(state.duration);
-
-    gameInterval = setInterval(updateGameClock, 25);
   } else {
     gameClockArea.hidden = true;
     timerLabel.textContent = '정답까지 걸린 시간';
   }
 
   showScreen('game');
+  runStartCountdown();
+}
+
+
+// 게임 시작 전 카운트다운
+
+function runStartCountdown() {
+  clearInterval(countdownInterval);
+  countdownInterval = null;
+
+  state.answerLocked = true;
+  answerInput.disabled = true;
+
+  let count = 3;
+
+  countdownOverlay.hidden = false;
+  countdownNumber.textContent = String(count);
+
+  countdownInterval = setInterval(() => {
+    count -= 1;
+
+    if (count > 0) {
+      countdownNumber.textContent = String(count);
+      return;
+    }
+
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+
+    countdownOverlay.hidden = true;
+
+    beginGameAfterCountdown();
+  }, 1000);
+}
+
+
+function beginGameAfterCountdown() {
+  if (!state.running) return;
+
+  if (state.mode === 'timed') {
+    state.gameEndsAt = performance.now() + state.duration * 1000;
+
+    gameClock.textContent = formatClock(state.duration);
+
+    gameInterval = setInterval(updateGameClock, 25);
+  }
+
   startNextQuestion();
 }
 
@@ -409,7 +459,7 @@ function handleTimedAnswer(selectedAnswer) {
     if (state.running) {
       startNextQuestion();
     }
-  }, 750);
+  }, 1000);
 }
 
 
@@ -445,7 +495,7 @@ function handleQuestionTimeout() {
     if (state.running) {
       startNextQuestion();
     }
-  }, 750);
+  }, 1000);
 }
 
 
@@ -473,7 +523,7 @@ function handlePracticeAnswer(selectedAnswer) {
       if (state.running) {
         startNextQuestion();
       }
-    }, 1500);
+    }, 1000);
   } else {
     feedback.textContent = '오답입니다. 다시 선택하세요.';
 
