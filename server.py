@@ -88,6 +88,10 @@ class RegisterRequest(BaseModel):
     nickname: str = Field(min_length=1, max_length=16)
 
 
+class LoginRequest(BaseModel):
+    nickname: str = Field(min_length=1, max_length=16)
+
+
 class RecordRequest(BaseModel):
     duration: Literal[30, 60]
     difficulty: Literal['easy', 'normal', 'hard', 'extreme']
@@ -137,18 +141,50 @@ def register(payload: RegisterRequest):
 
     try:
         with database() as connection:
-            connection.execute(
+            cursor = connection.execute(
                 """
                 INSERT INTO members (nickname, token_hash, created_at)
                 VALUES (?, ?, ?)
                 """,
                 (nickname, hash_token(token), int(time.time() * 1000))
             )
+            member_id = cursor.lastrowid
     except sqlite3.IntegrityError:
         raise HTTPException(409, '이미 사용 중인 닉네임입니다.')
 
     return {
+        'id': member_id,
         'nickname': nickname,
+        'token': token,
+    }
+
+
+@app.post('/api/login')
+def login(payload: LoginRequest):
+    nickname = payload.nickname.strip()
+
+    if not nickname or len(nickname) > 16:
+        raise HTTPException(400, '닉네임은 1~16자로 입력하세요.')
+
+    token = secrets.token_urlsafe(32)
+
+    with database() as connection:
+        member = connection.execute(
+            'SELECT id, nickname FROM members WHERE nickname = ?',
+            (nickname,)
+        ).fetchone()
+
+        if member is None:
+            raise HTTPException(401, '등록되지 않은 닉네임입니다.')
+
+        connection.execute(
+            'UPDATE members SET token_hash = ? WHERE id = ?',
+            (hash_token(token), member['id'])
+        )
+
+    return {
+        'id': member['id'],
+        'nickname': member['nickname'],
         'token': token,
     }
 
@@ -156,6 +192,19 @@ def register(payload: RegisterRequest):
 @app.get('/api/me')
 def get_me(member=Depends(get_current_member)):
     return member
+
+
+@app.post('/api/logout')
+def logout(member=Depends(get_current_member)):
+    replacement_token = secrets.token_urlsafe(32)
+
+    with database() as connection:
+        connection.execute(
+            'UPDATE members SET token_hash = ? WHERE id = ?',
+            (hash_token(replacement_token), member['id'])
+        )
+
+    return {'message': '로그아웃되었습니다.'}
 
 
 @app.delete('/api/account')

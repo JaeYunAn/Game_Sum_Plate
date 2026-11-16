@@ -32,6 +32,19 @@
           <button type="submit">회원가입</button>
         </form>
 
+        <form id="login-form">
+          <label for="login-nickname">로그인 닉네임</label>
+          <input
+            type="text"
+            id="login-nickname"
+            maxlength="16"
+            autocomplete="off"
+            required
+          >
+          <button type="submit">로그인</button>
+        </form>
+
+        <button type="button" id="logout-button" hidden>로그아웃</button>
         <button type="button" id="withdraw-button" hidden>회원탈퇴</button>
         <p id="account-feedback" aria-live="polite"></p>
       </section>

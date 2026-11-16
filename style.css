@@ -619,7 +619,8 @@ main {
   color: #315b82;
 }
 
-#register-form {
+#register-form,
+#login-form {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -627,11 +628,18 @@ main {
   gap: 10px;
 }
 
-#register-form label {
+#register-form label,
+#login-form label {
   font-weight: 700;
 }
 
-#register-nickname {
+#register-form[hidden],
+#login-form[hidden] {
+  display: none;
+}
+
+#register-nickname,
+#login-nickname {
   width: 160px;
   padding: 12px;
   border: 1px solid #ccd5df;

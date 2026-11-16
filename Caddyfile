@@ -1,0 +1,19 @@
+:8080 {
+	bind 127.0.0.1
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	@frontend {
+		path / /index.html /app.js /style.css
+	}
+	handle @frontend {
+		root * .
+		file_server
+	}
+
+	handle {
+		respond "Not Found" 404
+	}
+}

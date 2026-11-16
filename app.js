@@ -37,6 +37,9 @@ const gameSetup = document.querySelector('#game-setup');
 const accountStatus = document.querySelector('#account-status');
 const registerForm = document.querySelector('#register-form');
 const registerNicknameInput = document.querySelector('#register-nickname');
+const loginForm = document.querySelector('#login-form');
+const loginNicknameInput = document.querySelector('#login-nickname');
+const logoutButton = document.querySelector('#logout-button');
 const accountFeedback = document.querySelector('#account-feedback');
 const withdrawButton = document.querySelector('#withdraw-button');
 
@@ -558,11 +561,15 @@ function updateAccountUI() {
   if (currentAccount) {
     accountStatus.textContent = `현재 회원: ${currentAccount.nickname}`;
     registerForm.hidden = true;
+    loginForm.hidden = true;
+    logoutButton.hidden = false;
     withdrawButton.hidden = false;
   } else {
     accountStatus.textContent =
       '게스트 모드: 기록 조회만 가능합니다.';
     registerForm.hidden = false;
+    loginForm.hidden = false;
+    logoutButton.hidden = true;
     withdrawButton.hidden = true;
   }
 }
@@ -643,6 +650,79 @@ async function registerAccount(event) {
     accountFeedback.textContent = error.message;
   }
 }
+
+async function loginAccount(event) {
+  event.preventDefault();
+
+  const nickname = loginNicknameInput.value.trim();
+
+  if (!nickname) {
+    accountFeedback.textContent = '닉네임을 입력하세요.';
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ nickname }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || '로그인에 실패했습니다.');
+    }
+
+    localStorage.setItem(ACCOUNT_TOKEN_KEY, data.token);
+
+    currentAccount = {
+      id: data.id,
+      nickname: data.nickname,
+    };
+
+    loginForm.reset();
+    accountFeedback.textContent = '로그인되었습니다.';
+
+    updateAccountUI();
+  } catch (error) {
+    accountFeedback.textContent = error.message;
+  }
+}
+
+
+async function logoutAccount() {
+  if (!currentAccount) return;
+
+  const token = localStorage.getItem(ACCOUNT_TOKEN_KEY);
+
+  try {
+    const response = await fetch('/api/logout', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || '로그아웃에 실패했습니다.');
+    }
+
+    localStorage.removeItem(ACCOUNT_TOKEN_KEY);
+    currentAccount = null;
+
+    accountFeedback.textContent = '로그아웃되었습니다.';
+
+    updateAccountUI();
+  } catch (error) {
+    accountFeedback.textContent = error.message;
+  }
+}
+
 
 async function withdrawAccount() {
   if (!currentAccount) return;
@@ -864,6 +944,8 @@ async function saveRecord(event) {
 // 이벤트 등록
 
 registerForm.addEventListener('submit', registerAccount);
+loginForm.addEventListener('submit', loginAccount);
+logoutButton.addEventListener('click', logoutAccount);
 withdrawButton.addEventListener('click', withdrawAccount);
 
 gameSetup.addEventListener('submit', startGame);
