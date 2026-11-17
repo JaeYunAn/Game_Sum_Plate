@@ -1,15 +1,27 @@
 :8080 {
 	bind 127.0.0.1
 
+	# 모든 응답(정적 파일 + API)에 붙는 보안 헤더
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Content-Security-Policy "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
 	handle /api/* {
 		reverse_proxy 127.0.0.1:8000
 	}
 
+	# 프론트엔드 파일 4개만 공개한다. (.db, .py, .git, 비밀 키 파일 등은 아래 404로 떨어진다.)
 	@frontend {
 		path / /index.html /app.js /style.css
 	}
 	handle @frontend {
 		root * .
+		# 브라우저가 매번 변경 여부를 확인(ETag 재검증)하게 해서 수정한 파일이 바로 반영되게 한다.
+		header Cache-Control no-cache
 		file_server
 	}
 

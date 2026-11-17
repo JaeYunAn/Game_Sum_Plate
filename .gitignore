@@ -174,3 +174,16 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+### 번호판 더하기 (프로젝트 전용) ###
+# 실행 중 생성/변경되는 SQLite 데이터 (회원 닉네임·토큰 해시 포함)
+number_addition.db
+number_addition.db-shm
+number_addition.db-wal
+backups/
+
+# 자동 생성되는 Django SECRET_KEY
+.django_secret_key
+
+# 실행 스크립트가 남기는 PID 파일, 수동 백업 파일
+*.pid
+*.bak_*
